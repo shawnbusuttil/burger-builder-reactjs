@@ -1,14 +1,5 @@
-.app {
-	text-align: center;
-	
-	button {
-		border: 1px solid blue;
-		padding: 16px;
-		background-color: green;
-		color: white;
-
-		&:hover {
-			background-color: red;
-		}
-	}
+body {
+	margin: 0;
+	padding: 0;
+	font-family: "Open Sans", sans-serif;
 }
