@@ -1,9 +1,14 @@
 import React, { Component, Fragment } from "react";
 
+import withErrorHandler from "../error-handler/error-handler.component"
+
 import Burger from "../../components/burger/burger.component";
 import BuildControls from "../../components/burger/build-controls/build-controls.component";
 import OrderSummary from "../../components/burger/order-summary/order-summary.component";
 import Modal from "../../components/modal/modal.component";
+import Spinner from "../../components/spinner/spinner.component";
+
+import httpConfig from "../../axios.config";
 
 const INGREDIENT_PRICES = {
 	salad: 0.5,
@@ -14,15 +19,18 @@ const INGREDIENT_PRICES = {
 
 class BurgerBuilder extends Component {
 	state = {
-		ingredients: {
-			meat: 0,
-			salad: 0,
-			bacon: 0,
-			cheese: 0
-		},
+		isBusy: false,
 		totalPrice: 0,
 		isOrdering: false,
+		ingredients: null,
 		canPurchase: false
+	}
+
+	componentDidMount() {
+		this.setState({ isBusy: true });
+		httpConfig.get("/ingredients.json")
+			.then(response => this.setState({ ingredients: response.data, isBusy: false }))
+			.catch(error => this.setState({ isBusy: false }));
 	}
 
 	updatePurchaseState(ingredients) {
@@ -70,28 +78,60 @@ class BurgerBuilder extends Component {
 	}
 
 	continuePurchase = () => {
-		alert("You bought the burger!");
+		const order = {
+			ingredients: this.state.ingredients,
+			price: this.state.totalPrice,
+			customer: {
+				name: "Shawn",
+				address: {
+					zip: "ABC123",
+					street: "Baker Street",
+					country: "United Kingdom"
+				}
+			}
+		};
+
+		this.setState({ isBusy: true });
+
+		httpConfig.post("/orders.json", order)
+			.then(response => this.setState({ isBusy: false, isOrdering: false }))
+			.catch(error => this.setState({ isBusy: false, isOrdering: false }));
 	}
 
 	render() {
-		return (
-			<Fragment>
-				<Modal show={this.state.isOrdering} hide={this.cancelPurchase}>
-					<OrderSummary ingredients={this.state.ingredients}
-						price={this.state.totalPrice}
-						continuePurchase={this.continuePurchase}
-						cancelPurchase={this.cancelPurchase} />
-				</Modal>
-				<Burger ingredients={this.state.ingredients}></Burger>
+		let overlayContent = null;
+		let burger = this.state.isBusy ? <Spinner /> : <p>Ingredients could not be loaded.</p>;
+		
+		if (this.state.ingredients) {
+			burger = <Fragment>
+				<Burger ingredients={this.state.ingredients} />
 				<BuildControls
 					addIngredient={this.addIngredient}
 					removeIngredient={this.removeIngredient}
 					canPurchase={this.state.canPurchase}
 					isOrdering={this.purchaseBurger}
 					price={this.state.totalPrice} />
+			</Fragment>;
+
+			overlayContent = <OrderSummary ingredients={this.state.ingredients}
+				price={this.state.totalPrice}
+				continuePurchase={this.continuePurchase}
+				cancelPurchase={this.cancelPurchase} />
+		}
+		
+		if (this.state.isBusy) {
+			overlayContent = <Spinner />;
+		}
+
+		return (
+			<Fragment>
+				<Modal show={this.state.isOrdering} hide={this.cancelPurchase}>
+					{overlayContent}
+				</Modal>
+				{burger}
 			</Fragment>
 		);
 	}
 }
 
-export default BurgerBuilder;
+export default withErrorHandler(BurgerBuilder);
