@@ -1,4 +1,5 @@
 import React, { Component, Fragment } from "react";
+import { connect } from "react-redux";
 
 import withErrorHandler from "../error-handler/error-handler.component"
 
@@ -9,21 +10,12 @@ import Modal from "../../components/modal/modal.component";
 import Spinner from "../../components/spinner/spinner.component";
 
 import httpConfig from "../../axios.config";
-
-const INGREDIENT_PRICES = {
-	salad: 0.5,
-	cheese: 0.4,
-	meat: 1.5,
-	bacon: 0.8
-};
+import * as ACTION_TYPES from "../../store/actions";
 
 class BurgerBuilder extends Component {
 	state = {
 		isBusy: false,
-		totalPrice: 0,
-		isOrdering: false,
-		ingredients: null,
-		canPurchase: false
+		isOrdering: false
 	}
 
 	componentDidMount() {
@@ -33,43 +25,15 @@ class BurgerBuilder extends Component {
 			.catch(error => this.setState({ isBusy: false }));
 	}
 
-	updatePurchaseState(ingredients) {
-		const sum = Object.keys(ingredients)
+	updatePurchaseState = () => {
+		const sum = Object.keys(this.props.ingredients)
 			.map(key => ingredients[key])
 			.reduce((sum, item) => sum + item, 0);
 
-		this.setState({ canPurchase: sum > 0 });
+		return sum > 0;
 	}
 
-	addIngredient = (type) => {
-		const updatedIngredients = {
-			...this.state.ingredients,
-			[type]: this.state.ingredients[type] + 1
-		}
-
-		const price = this.state.totalPrice + INGREDIENT_PRICES[type];
-
-		this.setState({ totalPrice: price, ingredients: updatedIngredients });
-		this.updatePurchaseState(updatedIngredients);
-	}
-
-	removeIngredient = (type) => {
-		if (this.state.ingredients[type] <= 0) {
-			return;
-		}
-
-		const updatedIngredients = {
-			...this.state.ingredients,
-			[type]: this.state.ingredients[type] - 1
-		}
-
-		const price = this.state.totalPrice - INGREDIENT_PRICES[type];
-
-		this.setState({ totalPrice: price, ingredients: updatedIngredients });
-		this.updatePurchaseState(updatedIngredients);
-	}
-
-	purchaseBurger = () => {
+	startPurchase = () => {
 		this.setState({ isOrdering: true });
 	}
 
@@ -78,38 +42,26 @@ class BurgerBuilder extends Component {
 	}
 
 	continuePurchase = () => {
-		const queryParams = [];
-
-		for (let i in this.state.ingredients) {
-			queryParams.push(`${encodeURIComponent(i)}=${encodeURIComponent(this.state.ingredients[i])}`);
-		}
-
-		queryParams.push(`price=${this.state.totalPrice}`)
-		const queryString = queryParams.join("&");
-
-		this.props.history.push({
-			pathname: "/checkout",
-			search: `?${queryString}`
-		});
+		this.props.history.push("/checkout");
 	}
 
 	render() {
 		let overlayContent = null;
 		let burger = this.state.isBusy ? <Spinner /> : <p>Ingredients could not be loaded.</p>;
 		
-		if (this.state.ingredients) {
+		if (this.props.ingredients) {
 			burger = <Fragment>
-				<Burger ingredients={this.state.ingredients} />
+				<Burger ingredients={this.props.ingredients} />
 				<BuildControls
-					addIngredient={this.addIngredient}
-					removeIngredient={this.removeIngredient}
-					canPurchase={this.state.canPurchase}
-					isOrdering={this.purchaseBurger}
-					price={this.state.totalPrice} />
+					price={this.props.totalPrice}
+					canPurchase={this.updatePurchaseState}
+					addIngredient={this.props.addIngredient}
+					removeIngredient={this.props.removeIngredient}
+					startPurchase={this.startPurchase} />
 			</Fragment>;
 
-			overlayContent = <OrderSummary ingredients={this.state.ingredients}
-				price={this.state.totalPrice}
+			overlayContent = <OrderSummary ingredients={this.props.ingredients}
+				price={this.props.totalPrice}
 				continuePurchase={this.continuePurchase}
 				cancelPurchase={this.cancelPurchase} />
 		}
@@ -129,4 +81,24 @@ class BurgerBuilder extends Component {
 	}
 }
 
-export default BurgerBuilder;
+const mapStateToProps = (state) => {
+	return {
+		ingredients: state.ingredients,
+		totalPrice: state.totalPrice
+	};
+}
+
+const mapDispatchToProps = (dispatch) => {
+	return {
+		addIngredient: (ingredient) => dispatch({ 
+			type: ACTION_TYPES.ADD_INGREDIENT, 
+			payload: ingredient
+		}),
+		removeIngredient: (ingredient) => dispatch({ 
+			type: ACTION_TYPES.REMOVE_INGREDIENT, 
+			payload: ingredient
+		})
+	};
+} 
+
+export default connect(mapStateToProps, mapDispatchToProps)(BurgerBuilder);

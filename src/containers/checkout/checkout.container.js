@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { Route } from "react-router-dom";
+import { connect } from "react-redux";
 
 import httpConfig from "../../axios.config";
 
@@ -8,27 +9,8 @@ import CheckoutSummary from "../../components/order/checkout-summary/checkout-su
 
 class Checkout extends Component {
 	state = {
-		price: 0,
-		isBusy: false,
-		ingredients: null,
+		isBusy: false
 	};
-
-	componentWillMount() {
-		const query = new URLSearchParams(this.props.location.search);
-
-		let price = 0;
-		const ingredients = {};
-
-		for (let param of query.entries()) {
-			if (param[0] === "price") {
-				price = param[1];
-			} else {
-				ingredients[param[0]] = +param[1];
-			}
-		}
-
-		this.setState({ ingredients, price });
-	}
 
 	cancelCheckout = () => {
 		this.props.history.goBack();
@@ -42,8 +24,8 @@ class Checkout extends Component {
         this.setState({ isBusy: true });
 
         const order = {
-			ingredients: this.state.ingredients,
-			price: this.state.price,
+			ingredients: this.props.ingredients,
+			price: this.props.price,
 			customer: {
 				name: customerData.name,
 				email: customerData.email,
@@ -62,12 +44,20 @@ class Checkout extends Component {
 	render() {
 		return (
 			<div>
-				<CheckoutSummary ingredients={this.state.ingredients}
-					cancelCheckout={this.cancelCheckout} continueCheckout={this.continueCheckout} />
+				<CheckoutSummary ingredients={this.props.ingredients}
+					continueCheckout={this.continueCheckout}
+					cancelCheckout={this.cancelCheckout} />
 				<Route path={this.props.match.path + "/contact"} render={(props) => (<Contact placeOrder={this.completeCheckout} isBusy={props.isBusy} />)} />
 			</div>
 		);
 	}
-}	
+}
 
-export default Checkout;
+const mapStateToProps = (state) => {
+	return {
+		ingredients: state.ingredients,
+		price: state.totalPrice
+	};
+}
+
+export default connect(mapStateToProps)(Checkout);
