@@ -1,0 +1,15 @@
+.order {
+    width: 80%;
+    margin: 10px auto;
+    padding: 0 10px;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 3px #ccc;
+
+    span {
+        margin: 0 8px;
+        padding: 0 2px;
+        display: inline-block;
+        border: 1px solid #ccc;
+        text-transform: capitalize;
+    }
+}

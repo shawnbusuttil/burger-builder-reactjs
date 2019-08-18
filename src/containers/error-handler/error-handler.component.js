@@ -9,20 +9,18 @@ const withErrorHandler = (TranscludedComponent) => {
 			error: null
 		};
 
-		componentWillMount() {
-			this.requestInterceptor = httpConfig.interceptors.request.use(request => {
-				this.setState({error: null});
-				return request;
-			});
+		requestInterceptor = httpConfig.interceptors.request.use(request => {
+			this.setState({error: null});
+			return request;
+		});
 
-			this.responseInterceptor = httpConfig.interceptors.response.use(null, error => {
-				this.setState({error: error});
-			});
-		}
+		responseInterceptor = httpConfig.interceptors.response.use(null, error => {
+			this.setState({error: error});
+		});
 
 		componentWillUnmount() {
-			this.httpConfig.interceptors.request.eject(this.requestInterceptor);
-			this.httpConfig.interceptors.response.eject(this.responseInterceptor);
+			httpConfig.interceptors.request.eject(this.requestInterceptor);
+			httpConfig.interceptors.response.eject(this.responseInterceptor);
 		}
 
 		errorDismissed = () => {

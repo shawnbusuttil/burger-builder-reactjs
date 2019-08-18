@@ -1,21 +1,33 @@
 import React, { Component } from "react";
+import { Route } from "react-router-dom";
 
+import httpConfig from "../../axios.config";
+
+import Contact from "./contact/contact.container";
 import CheckoutSummary from "../../components/order/checkout-summary/checkout-summary.component";
 
 class Checkout extends Component {
 	state = {
-		ingredients: {}
+		price: 0,
+		isBusy: false,
+		ingredients: null,
 	};
 
-	componentDidMount() {
+	componentWillMount() {
 		const query = new URLSearchParams(this.props.location.search);
+
+		let price = 0;
 		const ingredients = {};
 
 		for (let param of query.entries()) {
-			ingredients[param[0]] = +param[1];
+			if (param[0] === "price") {
+				price = param[1];
+			} else {
+				ingredients[param[0]] = +param[1];
+			}
 		}
 
-		this.setState({ ingredients: ingredients });
+		this.setState({ ingredients, price });
 	}
 
 	cancelCheckout = () => {
@@ -23,7 +35,28 @@ class Checkout extends Component {
 	}
 
 	continueCheckout = () => {
-		this.props.history.replace("/checkout/contact-data");
+		this.props.history.replace("/checkout/contact");
+	}
+
+	completeCheckout = (customerData) => {
+        this.setState({ isBusy: true });
+
+        const order = {
+			ingredients: this.state.ingredients,
+			price: this.state.price,
+			customer: {
+				name: customerData.name,
+				email: customerData.email,
+				address: customerData.address
+			}
+		};
+
+		httpConfig.post("/orders.json", order)
+			.then(response => {
+                this.setState({ isBusy: false });
+				this.props.history.push("/");
+            })
+			.catch(error => this.setState({ isBusy: false }));
 	}
 
 	render() {
@@ -31,6 +64,7 @@ class Checkout extends Component {
 			<div>
 				<CheckoutSummary ingredients={this.state.ingredients}
 					cancelCheckout={this.cancelCheckout} continueCheckout={this.continueCheckout} />
+				<Route path={this.props.match.path + "/contact"} render={(props) => (<Contact placeOrder={this.completeCheckout} isBusy={props.isBusy} />)} />
 			</div>
 		);
 	}

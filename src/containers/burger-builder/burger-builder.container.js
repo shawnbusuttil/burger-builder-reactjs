@@ -27,7 +27,6 @@ class BurgerBuilder extends Component {
 	}
 
 	componentDidMount() {
-		console.log(this.props);
 		this.setState({ isBusy: true });
 		httpConfig.get("/ingredients.json")
 			.then(response => this.setState({ ingredients: response.data, isBusy: false }))
@@ -82,33 +81,16 @@ class BurgerBuilder extends Component {
 		const queryParams = [];
 
 		for (let i in this.state.ingredients) {
-			queryParams.push(encodeURIComponent(i) + "=" + encodeURIComponent(this.state.ingredients[i]));
+			queryParams.push(`${encodeURIComponent(i)}=${encodeURIComponent(this.state.ingredients[i])}`);
 		}
 
+		queryParams.push(`price=${this.state.totalPrice}`)
 		const queryString = queryParams.join("&");
 
 		this.props.history.push({
 			pathname: "/checkout",
 			search: `?${queryString}`
 		});
-		// const order = {
-		// 	ingredients: this.state.ingredients,
-		// 	price: this.state.totalPrice,
-		// 	customer: {
-		// 		name: "Shawn",
-		// 		address: {
-		// 			zip: "ABC123",
-		// 			street: "Baker Street",
-		// 			country: "United Kingdom"
-		// 		}
-		// 	}
-		// };
-
-		// this.setState({ isBusy: true });
-
-		// httpConfig.post("/orders.json", order)
-		// 	.then(response => this.setState({ isBusy: false, isOrdering: false }))
-		// 	.catch(error => this.setState({ isBusy: false, isOrdering: false }));
 	}
 
 	render() {

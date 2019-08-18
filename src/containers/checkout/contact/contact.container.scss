@@ -1,0 +1,24 @@
+.contact {
+    width: 80%;
+    margin: 20px auto;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #eee;
+    box-shadow: 0 2px 3px #ccc;
+
+    label {
+        display: inline-block;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    input {
+        display: inline-block;
+    }
+}
+
+@media (min-width: 600px) {
+    .contact {
+        width: 500px;
+    }
+}

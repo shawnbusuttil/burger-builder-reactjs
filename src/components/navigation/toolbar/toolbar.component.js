@@ -11,8 +11,8 @@ const navItems = [
 		title: "Burger Builder"
 	},
 	{
-		link: "/",
-		title: "Checkout"
+		link: "/orders",
+		title: "Orders"
 	}
 ];
 
